@@ -10,7 +10,14 @@ const getList = (authorId) => {
   // 在此处根据数据库的 sortIndex 进行排序，返回一个数组
   sql += 'order by sortIndex;';
   // 返回 Promise
-  return exec(sql);
+  return exec(sql)
+    .then((todolistData) => {
+      return todolistData;
+    })
+    .catch((err) => {
+      console.log(err);
+      return {};
+    });
 };
 
 // 添加新的 todo
