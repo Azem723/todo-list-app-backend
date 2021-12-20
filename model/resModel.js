@@ -28,7 +28,15 @@ class ErrorModel extends BaseModel {
   }
 }
 
+class TokenErrorModel extends BaseModel {
+  constructor(data, message) {
+    super(data, message);
+    this.errno = -2;
+  }
+}
+
 module.exports = {
   SuccessModel,
-  ErrorModel
+  ErrorModel,
+  TokenErrorModel
 };

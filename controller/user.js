@@ -48,11 +48,14 @@ const isUserNameRepeatRes = (username) => {
 };
 
 const regist = async (username, password) => {
+  username = decrypt(username);
+  password = decrypt(password);
+  const resusername = username;
   username = escape(username);
 
-  const isRepeat = await isUserNameRepeatRes(username);
+  const isNameAvailable = await isUserNameRepeatRes(username);
 
-  if (isRepeat) {
+  if (isNameAvailable) {
     password = genPassword(password);
     password = escape(password);
     const newUid = genUid();
@@ -60,14 +63,11 @@ const regist = async (username, password) => {
     insert into user (uid,username,password)
     values (${newUid}, ${username}, ${password});
     `;
-    try {
-      const registData = await exec(sql);
-      if (registData.affectedRows > 0) {
-        return { success: true, uid: newUid };
-      } else {
-        return { success: false, message: '注册失败' };
-      }
-    } catch (error) {
+
+    const registData = await exec(sql);
+    if (registData.affectedRows > 0) {
+      return { success: true, uid: newUid, username: resusername };
+    } else {
       return { success: false, message: '注册失败' };
     }
   } else {
@@ -75,7 +75,74 @@ const regist = async (username, password) => {
   }
 };
 
+const changeUsername = async (oldUsername, newUsername, uid) => {
+  oldUsername = decrypt(oldUsername);
+  newUsername = decrypt(newUsername);
+  const resname = newUsername;
+  oldUsername = escape(oldUsername);
+  newUsername = escape(newUsername);
+  uid = escape(uid);
+  // console.log(oldUsername, newUsername, uid);
+  const isNameAvailable = await isUserNameRepeatRes(newUsername);
+  if (isNameAvailable) {
+    const sql = `
+    update user set username=${newUsername} where uid=${uid};
+    `;
+    const changeNameRes = await exec(sql);
+    if (changeNameRes.affectedRows > 0) {
+      return {
+        success: true,
+        message: '用户名修改成功',
+        newUsername: resname
+      };
+    } else {
+      return { success: false, message: '用户名修改失败' };
+    }
+  } else {
+    return { success: false, message: '用户名已被占用' };
+  }
+};
+
+const changePasswordVerify = (oldPassword, uid) => {
+  const sql = `
+  select username from user where uid=${uid} and password=${oldPassword}
+  `;
+  return exec(sql).then((verifyRes) => {
+    if (verifyRes.length > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  });
+};
+const changePassword = async (oldPassword, newPassword, uid) => {
+  oldPassword = decrypt(oldPassword);
+  newPassword = decrypt(newPassword);
+
+  oldPassword = genPassword(oldPassword);
+  newPassword = genPassword(newPassword);
+  oldPassword = escape(oldPassword);
+  newPassword = escape(newPassword);
+  uid = escape(uid);
+  const verifyRes = await changePasswordVerify(oldPassword, uid);
+  if (verifyRes) {
+    const sql = `
+    update user set password=${newPassword} where uid=${uid}
+    `;
+    const changePassword = await exec(sql);
+    if (changePassword.affectedRows > 0) {
+      return { success: true, message: '密码修改成功，请重新登录' };
+    } else {
+      return { success: false, message: '密码修改失败' };
+    }
+  } else {
+    return { success: false, message: '旧密码错误' };
+  }
+};
+
 module.exports = {
   login,
-  regist
+  regist,
+  changeUsername,
+  changePassword
 };

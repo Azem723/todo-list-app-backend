@@ -5,10 +5,10 @@ const fs = require('fs');
 // 公钥
 const publicKey = fs
   .readFileSync('./utils/rsa_public_key.pem')
-  .toString('ascii');
+  .toString();
 const privateKey = fs
   .readFileSync('./utils/rsa_private_key.pem')
-  .toString('ascii');
+  .toString();
 
 const publiCipher = {
   key: publicKey,
@@ -38,7 +38,7 @@ function decrypt(data) {
 }
 
 // 密匙
-const SECRET_KEY = 'Arfoi_3658#';
+const SECRET_KEY = 
 
 // md5 加密
 function md5(content) {

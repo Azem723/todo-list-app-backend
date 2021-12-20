@@ -1,21 +1,24 @@
 const mysql = require('mysql');
 const { MYSQL_CONF } = require('../conf/db');
 
-// 创建连接对象
-const con = mysql.createConnection(MYSQL_CONF);
+// 使用连接池重构 mysql 连接函数，防止连接自动断开
+const con = mysql.createPool(MYSQL_CONF);
 
-// 开始连接
-con.connect();
-
-// 统一执行 sql 函数
 function exec(sql) {
   const promise = new Promise((resolve, reject) => {
-    con.query(sql, (err, result) => {
+    con.getConnection(function (err, connection) {
       if (err) {
         reject(err);
-        return;
+      } else {
+        connection.query(sql, (err, result) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(result);
+        });
+        connection.release();
       }
-      resolve(result);
     });
   });
   return promise;
